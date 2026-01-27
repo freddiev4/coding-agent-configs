@@ -1,0 +1,49 @@
+# Pre-commit configuration for Python projects
+# Copy to .pre-commit-config.yaml
+#
+# Installation: uv add --group dev pre-commit && uv run pre-commit install
+# Run all: uv run pre-commit run --all-files
+
+default_language_version:
+  python: python3.12
+
+repos:
+  # Ruff - linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.0  # Update to latest version
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0  # Update to latest version
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+
+  # Security - detect secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0  # Update to latest version
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        # Initialize baseline: detect-secrets scan > .secrets.baseline
+
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0  # Update to latest version
+    hooks:
+      - id: shellcheck
+        args: [--severity=error]
+
+  # GitHub Actions linting
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.0  # Update to latest version
+    hooks:
+      - id: actionlint
