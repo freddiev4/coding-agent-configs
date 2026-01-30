@@ -1,4 +1,5 @@
 {
+  "model": "sonnet",
   "hooks": {
     "PreToolUse": [
       {
@@ -20,9 +21,59 @@
             "command": "bunx github:nitsanavni/bash-history-mcp hook"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-code-sync hook PostToolUse"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-code-sync hook SessionStart"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-code-sync hook SessionEnd"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-code-sync hook UserPromptSubmit"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-code-sync hook Stop"
+          }
+        ]
       }
     ]
-  },    
+  },
   "statusLine": {
     "type": "command",
     "command": "bash -c '\"/opt/homebrew/bin/node\" \"$(ls -td ~/.claude/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | head -1)dist/index.js\"'"
@@ -30,5 +81,21 @@
   "enabledPlugins": {
     "claude-hud@claude-hud": true
   },
-  "model": "opus"
+  "permissions": {
+    "allow": [
+      "Bash(curl *)",
+      "Bash(kubectl *)",
+      "Bash(uv *)",
+      "Bash(gh *)",
+      "Bash(git *)",
+      "Bash(bun *)",
+      "Bash(npm *)",
+      "Bash(docker *)",
+      "Bash(argocd *)",
+      "Bash(kind *)",
+      "Bash(brew *)",
+      "Read(*)",
+      "WebFetch(*)"
+    ]
+  },    
 }
