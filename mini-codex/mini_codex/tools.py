@@ -397,7 +397,9 @@ class ToolExecutor:
         command = args.get("command", "")
         if not command:
             return ToolResult(success=False, output="", error="No command provided")
+
         timeout = args.get("timeout", self.timeout)
+
         try:
             result = subprocess.run(
                 command, shell=True, cwd=self.working_dir,
@@ -406,6 +408,7 @@ class ToolExecutor:
             output = result.stdout
             if result.stderr:
                 output += f"\n[stderr]\n{result.stderr}"
+
             return ToolResult(
                 success=result.returncode == 0,
                 output=output.strip(),
@@ -418,20 +421,25 @@ class ToolExecutor:
         path = args.get("path", "")
         if not path:
             return ToolResult(success=False, output="", error="No path provided")
+
         resolved = self._resolve_path(path)
         if not os.path.exists(resolved):
             return ToolResult(success=False, output="", error=f"File not found: {path}")
+
         with open(resolved, "r") as f:
             lines = f.readlines()
+
         offset = args.get("offset")
         limit = args.get("limit")
         if offset is not None:
             lines = lines[max(0, offset - 1):]
         if limit is not None:
             lines = lines[:limit]
+
         # Number lines
         start = max(1, (offset or 1))
         numbered = [f"{start + i:>6}\t{line.rstrip()}" for i, line in enumerate(lines)]
+
         return ToolResult(success=True, output="\n".join(numbered))
 
     def _execute_write_file(self, args: dict[str, Any]) -> ToolResult:
@@ -439,10 +447,13 @@ class ToolExecutor:
         content = args.get("content", "")
         if not path:
             return ToolResult(success=False, output="", error="No path provided")
+
         resolved = self._resolve_path(path)
         os.makedirs(os.path.dirname(resolved), exist_ok=True)
+
         with open(resolved, "w") as f:
             f.write(content)
+
         return ToolResult(success=True, output=f"Wrote {len(content)} bytes to {path}")
 
     def _execute_edit_file(self, args: dict[str, Any]) -> ToolResult:
@@ -452,11 +463,14 @@ class ToolExecutor:
         replace_all = args.get("replace_all", False)
         if not path:
             return ToolResult(success=False, output="", error="No path provided")
+
         resolved = self._resolve_path(path)
         if not os.path.exists(resolved):
             return ToolResult(success=False, output="", error=f"File not found: {path}")
+
         with open(resolved, "r") as f:
             content = f.read()
+
         if old_string not in content:
             return ToolResult(success=False, output="", error="old_string not found in file")
         if not replace_all and content.count(old_string) > 1:
@@ -464,9 +478,16 @@ class ToolExecutor:
                 success=False, output="",
                 error=f"old_string found {content.count(old_string)} times; use replace_all or provide more context",
             )
-        new_content = content.replace(old_string, new_string) if replace_all else content.replace(old_string, new_string, 1)
+
+        new_content = (
+            content.replace(old_string, new_string)
+            if replace_all
+            else content.replace(old_string, new_string, 1)
+        )
+
         with open(resolved, "w") as f:
             f.write(new_content)
+
         return ToolResult(success=True, output=f"Edited {path}")
 
     def _execute_multi_edit(self, args: dict[str, Any]) -> ToolResult:
@@ -474,11 +495,14 @@ class ToolExecutor:
         edits = args.get("edits", [])
         if not path:
             return ToolResult(success=False, output="", error="No path provided")
+
         resolved = self._resolve_path(path)
         if not os.path.exists(resolved):
             return ToolResult(success=False, output="", error=f"File not found: {path}")
+
         with open(resolved, "r") as f:
             content = f.read()
+
         applied = 0
         for edit in edits:
             old = edit.get("old_string", "")
@@ -486,8 +510,10 @@ class ToolExecutor:
             if old in content:
                 content = content.replace(old, new, 1)
                 applied += 1
+
         with open(resolved, "w") as f:
             f.write(content)
+
         return ToolResult(success=True, output=f"Applied {applied}/{len(edits)} edits to {path}")
 
     def _execute_apply_patch(self, args: dict[str, Any]) -> ToolResult:
@@ -497,6 +523,7 @@ class ToolExecutor:
             return ToolResult(success=False, output="", error="No path provided")
         if not patch:
             return ToolResult(success=False, output="", error="No patch provided")
+
         resolved = self._resolve_path(path)
         try:
             with tempfile.NamedTemporaryFile(mode="w", suffix=".patch", delete=False) as f:
@@ -523,6 +550,7 @@ class ToolExecutor:
             return ToolResult(success=False, output="", error=f"Path not found: {path}")
         if os.path.isfile(resolved):
             return ToolResult(success=True, output=path)
+
         entries = []
         for entry in sorted(os.listdir(resolved)):
             full = os.path.join(resolved, entry)
@@ -535,6 +563,7 @@ class ToolExecutor:
         base = args.get("path", ".")
         if not pattern:
             return ToolResult(success=False, output="", error="No pattern provided")
+
         resolved = self._resolve_path(base)
         matches = sorted(str(p.relative_to(resolved)) for p in pathlib.Path(resolved).glob(pattern))
         if not matches:
@@ -548,6 +577,7 @@ class ToolExecutor:
         ctx = args.get("context_lines", 0)
         if not pattern:
             return ToolResult(success=False, output="", error="No pattern provided")
+
         resolved = self._resolve_path(path)
         try:
             regex = re.compile(pattern)
@@ -588,6 +618,7 @@ class ToolExecutor:
 
         if not results:
             return ToolResult(success=True, output="(no matches)")
+
         output = "\n".join(results)
         if len(results) >= max_results:
             output += f"\n... (truncated at {max_results} results)"
@@ -628,12 +659,14 @@ class ToolExecutor:
 
         lines.append(os.path.basename(resolved) + "/")
         _walk(resolved, "", 1)
+
         return ToolResult(success=True, output="\n".join(lines))
 
     def _execute_web_fetch(self, args: dict[str, Any]) -> ToolResult:
         url = args.get("url", "")
         if not url:
             return ToolResult(success=False, output="", error="No URL provided")
+
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "mini-codex/0.2"})
             with urllib.request.urlopen(req, timeout=15) as resp:
@@ -649,22 +682,92 @@ class ToolExecutor:
         query = args.get("query", "")
         if not query:
             return ToolResult(success=False, output="", error="No query provided")
-        # This is a placeholder — a real implementation would call a search API.
-        return ToolResult(
-            success=False, output="",
-            error="web_search requires a SEARCH_API_KEY environment variable. "
-                  "Set it to use a search provider, or use web_fetch with a known URL.",
-        )
+
+        api_key = os.environ.get("TAVILY_API_KEY")
+        if not api_key:
+            return ToolResult(
+                success=False,
+                output="",
+                error=(
+                    "web_search requires a TAVILY_API_KEY environment variable. "
+                    "Create an API key at https://tavily.com and set TAVILY_API_KEY."
+                ),
+            )
+
+        # Tavily Search API
+        # Docs: https://docs.tavily.com/
+        url = "https://api.tavily.com/search"
+        payload = {
+            "api_key": api_key,
+            "query": query,
+            "search_depth": "basic",
+            "include_answer": False,
+            "include_images": False,
+            "include_raw_content": False,
+            "max_results": 5,
+        }
+
+        try:
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                url,
+                data=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "User-Agent": "mini-codex/0.2",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                body = resp.read().decode("utf-8", errors="replace")
+            parsed = json.loads(body)
+
+            results = parsed.get("results", []) or []
+            lines: list[str] = []
+            for i, r in enumerate(results, start=1):
+                title = (r.get("title") or "").strip()
+                link = (r.get("url") or "").strip()
+                snippet = (r.get("content") or "").strip()
+                if len(snippet) > 300:
+                    snippet = snippet[:300].rstrip() + "…"
+                header = f"{i}. {title}" if title else f"{i}."
+                if link:
+                    header += f"\n   {link}"
+                if snippet:
+                    header += f"\n   {snippet}"
+                lines.append(header)
+
+            if not lines:
+                return ToolResult(success=True, output="No results.")
+
+            return ToolResult(success=True, output="\n".join(lines))
+
+        except urllib.error.HTTPError as e:
+            try:
+                err_body = e.read().decode("utf-8", errors="replace")
+            except Exception:
+                err_body = ""
+            return ToolResult(
+                success=False,
+                output="",
+                error=f"Tavily API error ({e.code}): {err_body or e.reason}",
+            )
+        except Exception as e:
+            return ToolResult(success=False, output="", error=str(e))
 
     def _execute_task(self, args: dict[str, Any]) -> ToolResult:
         description = args.get("description", "")
         prompt = args.get("prompt", "")
+
         if not prompt:
             return ToolResult(success=False, output="", error="No prompt provided")
         if not self.subagent_callback:
             return ToolResult(success=False, output="", error="Subagent spawning not available")
+
         try:
             result = self.subagent_callback(description, prompt)
+
             return ToolResult(success=True, output=result)
         except Exception as e:
             return ToolResult(success=False, output="", error=f"Subagent failed: {e}")
@@ -672,6 +775,7 @@ class ToolExecutor:
     def _execute_todo(self, args: dict[str, Any]) -> ToolResult:
         items = args.get("items", [])
         output = self.todo_list.set(items)
+
         return ToolResult(success=True, output=output)
 
     def _execute_notebook_edit(self, args: dict[str, Any]) -> ToolResult:
@@ -681,19 +785,26 @@ class ToolExecutor:
         cell_type = args.get("cell_type")
         if not path:
             return ToolResult(success=False, output="", error="No path provided")
+
         if cell_index is None:
             return ToolResult(success=False, output="", error="No cell_index provided")
+
         resolved = self._resolve_path(path)
         if not os.path.exists(resolved):
             return ToolResult(success=False, output="", error=f"File not found: {path}")
+
         with open(resolved, "r") as f:
             notebook = json.load(f)
+
         cells = notebook.get("cells", [])
         if cell_index < 0 or cell_index >= len(cells):
             return ToolResult(success=False, output="", error=f"cell_index {cell_index} out of range (0-{len(cells)-1})")
+
         cells[cell_index]["source"] = new_source.splitlines(True)
         if cell_type:
             cells[cell_index]["cell_type"] = cell_type
+
         with open(resolved, "w") as f:
             json.dump(notebook, f, indent=1)
+
         return ToolResult(success=True, output=f"Updated cell {cell_index} in {path}")
