@@ -1,11 +1,11 @@
-"""Command-line interface for Proto."""
+"""Command-line interface for Rune."""
 
 import argparse
 import os
 import sys
 
-from proto.agent import Agent, AgentConfig
-from proto.agents import list_agents
+from rune.agent import Agent, AgentConfig
+from rune.agents import list_agents
 
 
 def print_colored(text: str, color: str) -> None:
@@ -49,7 +49,7 @@ def print_tool_result(result, name: str) -> None:
 
 def run_interactive(agent: Agent) -> None:
     """Run the agent in interactive REPL mode."""
-    print_colored("Proto v0.2 - Interactive Mode", "bold")
+    print_colored("Rune v0.2 - Interactive Mode", "bold")
     print_colored(f"Agent: {agent.agent_def.name} | Model: {agent.config.model}", "dim")
     print_colored(f"Working directory: {agent.working_dir}", "dim")
     print_colored("Commands: exit, reset, history, switch <agent>, agents, status\n", "dim")
@@ -138,15 +138,15 @@ def run_single(agent: Agent, prompt: str) -> None:
 def main() -> None:
     """Main entry point for the CLI."""
     parser = argparse.ArgumentParser(
-        description="Proto - A coding agent with harness features inspired by OpenCode",
+        description="Rune - A coding agent with harness features", 
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""\
 Examples:
-  proto                              # Interactive build agent
-  proto --agent plan                 # Interactive plan (read-only) agent
-  proto -p "list all files"          # Single prompt mode
-  proto --mcp-config mcp.json        # Load MCP tool servers
-  proto --model gpt-4o-mini          # Use a different model
+  rune                              # Interactive build agent
+  rune --agent plan                 # Interactive plan (read-only) agent
+  rune -p "list all files"          # Single prompt mode
+  rune --mcp-config mcp.json        # Load MCP tool servers
+  rune --model gpt-4o-mini          # Use a different model
 """,
     )
 

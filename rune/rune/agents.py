@@ -1,5 +1,5 @@
 """
-Declarative agent definitions inspired by OpenCode.
+Declarative agent definitions  
 
 Each agent is a configuration object — not a class — that specifies:
   - A name and description
@@ -16,13 +16,13 @@ Built-in agents:
 from dataclasses import dataclass, field
 from typing import Any
 
-from proto.permissions import (
+from rune.permissions import (
     PermissionSet,
     build_permissions,
     plan_permissions,
     subagent_permissions,
 )
-from proto.tools import TOOL_DEFINITIONS
+from rune.tools import TOOL_DEFINITIONS
 
 
 @dataclass

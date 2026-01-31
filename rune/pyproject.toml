@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "proto"
+name = "rune"
 version = "0.2.0"
-description = "A coding agent harness inspired by OpenCode — with 15 tools, MCP support, permissions, subagent spawning, and plan/build agents"
+description = "A coding agent harness with 15 tools, MCP support, permissions, subagent spawning, and plan/build agents"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-proto = "proto.cli:main"
+rune = "rune.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

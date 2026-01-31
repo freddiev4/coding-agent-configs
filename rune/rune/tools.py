@@ -1,6 +1,6 @@
 """Tool definitions and execution for the coding agent.
 
-Provides 15 built-in tools inspired by OpenCode's tool system:
+Provides 15 built-in tools inspired by 's tool system:
   1. shell          - Execute shell commands
   2. read_file      - Read file contents (with optional line range)
   3. write_file     - Write/create files
@@ -668,7 +668,7 @@ class ToolExecutor:
             return ToolResult(success=False, output="", error="No URL provided")
 
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "proto/0.2"})
+            req = urllib.request.Request(url, headers={"User-Agent": "rune/0.2"})
             with urllib.request.urlopen(req, timeout=15) as resp:
                 body = resp.read().decode("utf-8", errors="replace")
             # Truncate very large responses
@@ -715,7 +715,7 @@ class ToolExecutor:
                 headers={
                     "Content-Type": "application/json",
                     "Accept": "application/json",
-                    "User-Agent": "proto/0.2",
+                    "User-Agent": "rune/0.2",
                 },
                 method="POST",
             )
