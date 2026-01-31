@@ -6,23 +6,26 @@ MCP), session management, and subagent spawning.
 
 import json
 import os
+from rich.console import Console
+from rich.spinner import Spinner
 from dataclasses import dataclass, field
 from typing import Any, Callable, Generator
 
 from openai import OpenAI
 
-from .agents import AgentDefinition, get_agent_definition, AGENT_REGISTRY
-from .mcp_client import MCPManager
-from .permissions import PermissionLevel
-from .session import Session
-from .tools import TOOL_DEFINITIONS, ToolExecutor, ToolResult, TodoList
+from mini_codex.agents import AgentDefinition, get_agent_definition, AGENT_REGISTRY
+from mini_codex.mcp_client import MCPManager
+from mini_codex.permissions import PermissionLevel
+from mini_codex.session import Session
+from mini_codex.tools import TOOL_DEFINITIONS, ToolExecutor, ToolResult, TodoList
 
 
 @dataclass
 class AgentConfig:
     """Runtime configuration for an agent instance."""
-    model: str = "gpt-4o"
-    agent_name: str = "build"  # Which agent definition to use
+    model: str = "gpt-5.2-2025-12-11"
+    # which agent definition to use
+    agent_name: str = "build"
     auto_approve_tools: bool = True
     mcp_config_path: str | None = None  # Path to mcp.json
 
@@ -207,7 +210,7 @@ class Agent:
             tools=self._get_permitted_tools(),
             tool_choice="auto",
             temperature=self.agent_def.temperature,
-            max_tokens=self.agent_def.max_tokens,
+            max_completion_tokens=self.agent_def.max_completion_tokens,
         )
 
     def _execute_tool(self, tool_call) -> ToolResult:
@@ -274,8 +277,10 @@ class Agent:
         # Replace the child agent's session with the forked one
         child_agent.session = child_session
 
-        # Run the subagent
-        result = child_agent.run_sync(prompt)
+        # Run the subagent with a spinner
+        console = Console()
+        with console.status("[bold green]Running subagent task...") as status:
+            result = child_agent.run_sync(prompt)
 
         # Accumulate child usage into parent
         self.session.usage.add(
@@ -297,7 +302,7 @@ class Agent:
                 model=self.config.model,
                 messages=messages + [{"role": "user", "content": summary_prompt}],
                 temperature=0.0,
-                max_tokens=1024,
+                max_completion_tokens=1024,
             )
             summary = resp.choices[0].message.content or "No summary available."
             self.session.compact(summary)
