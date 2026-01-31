@@ -1,4 +1,5 @@
-"""Declarative agent definitions inspired by OpenCode.
+"""
+Declarative agent definitions inspired by OpenCode.
 
 Each agent is a configuration object — not a class — that specifies:
   - A name and description
@@ -21,14 +22,18 @@ from .permissions import (
     plan_permissions,
     subagent_permissions,
 )
+from .tools import TOOL_DEFINITIONS
 
 
 @dataclass
 class AgentDefinition:
-    """Declarative configuration for an agent type."""
+    """
+    Declarative configuration for an agent type.
+    """
     name: str
     description: str
-    mode: str = "primary"  # "primary" | "subagent"
+    # "primary" | "subagent"
+    mode: str = "primary"
     system_prompt: str = ""
     permission_set: PermissionSet = field(default_factory=lambda: build_permissions())
     temperature: float = 0.0
@@ -37,28 +42,41 @@ class AgentDefinition:
 
 
 # ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
+
+def _format_tools_list(permission_set: PermissionSet | None = None) -> str:
+    """Generate a formatted list of available tools from TOOL_DEFINITIONS.
+
+    Args:
+        permission_set: Optional permission set to filter tools. If None, includes all tools.
+
+    Returns:
+        A formatted string with tool names and descriptions.
+    """
+    tools = []
+    for tool_def in TOOL_DEFINITIONS:
+        name = tool_def["function"]["name"]
+        description = tool_def["function"]["description"]
+
+        # Filter by permissions if provided
+        if permission_set and permission_set.is_denied(name):
+            continue
+
+        tools.append(f"- {name}: {description}")
+
+    return "\n".join(tools)
+
+
+# ---------------------------------------------------------------------------
 # System prompts
 # ---------------------------------------------------------------------------
 
-BUILD_SYSTEM_PROMPT = """\
+BUILD_SYSTEM_PROMPT = f"""\
 You are a coding assistant with full access to read, write, and execute code.
 
 Available tools:
-- shell: Execute shell commands (tests, git, builds, etc.)
-- read_file: Read file contents (supports line ranges)
-- write_file: Write/create files
-- edit_file: Search-and-replace editing
-- multi_edit: Multiple edits in one call
-- apply_patch: Apply unified diff patches
-- list_files: List directory contents
-- glob: Pattern-based file search
-- grep: Content search with regex
-- tree: Recursive directory tree
-- web_fetch: Fetch URL content
-- web_search: Web search
-- task: Spawn a subagent for complex subtasks
-- todo: Manage a structured task list
-- notebook_edit: Edit Jupyter notebook cells
+{_format_tools_list(build_permissions())}
 
 When working on tasks:
 1. Understand the codebase first — read relevant files before making changes
@@ -69,19 +87,12 @@ When working on tasks:
 6. Be careful with destructive operations
 """
 
-PLAN_SYSTEM_PROMPT = """\
+PLAN_SYSTEM_PROMPT = f"""\
 You are a read-only planning and analysis assistant. You can explore the codebase \
 and answer questions, but you CANNOT modify files or execute commands.
 
 Available tools:
-- read_file: Read file contents
-- list_files: List directory contents
-- glob: Pattern-based file search
-- grep: Content search with regex
-- tree: Recursive directory tree
-- web_fetch: Fetch URL content
-- web_search: Web search
-- todo: Manage a structured task list
+{_format_tools_list(plan_permissions())}
 
 Your role:
 1. Explore and understand codebases
@@ -93,11 +104,12 @@ You CANNOT write files, edit files, run shell commands, or spawn subagents. \
 If the user needs changes made, suggest switching to the build agent.
 """
 
-SUBAGENT_SYSTEM_PROMPT = """\
+SUBAGENT_SYSTEM_PROMPT = f"""\
 You are a subagent handling a specific subtask. Complete the task autonomously \
 and return a clear summary of what you did.
 
-You have the same tools as the build agent except you cannot spawn further subagents.
+Available tools:
+{_format_tools_list(subagent_permissions())}
 
 Focus on:
 1. Completing the assigned task efficiently
@@ -144,13 +156,18 @@ AGENT_REGISTRY: dict[str, AgentDefinition] = {
 
 
 def get_agent_definition(name: str) -> AgentDefinition:
-    """Look up an agent definition by name."""
+    """
+    Look up an agent definition by name.
+    """
     if name not in AGENT_REGISTRY:
         available = ", ".join(AGENT_REGISTRY.keys())
         raise ValueError(f"Unknown agent {name!r}. Available: {available}")
+
     return AGENT_REGISTRY[name]
 
 
 def list_agents() -> list[AgentDefinition]:
-    """Return all registered agent definitions."""
+    """
+    Return all registered agent definitions.
+    """
     return list(AGENT_REGISTRY.values())
