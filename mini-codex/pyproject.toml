@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mini-codex"
-version = "0.1.0"
-description = "A minimal coding agent inspired by OpenAI's Codex"
+version = "0.2.0"
+description = "A coding agent harness inspired by OpenCode — with 15 tools, MCP support, permissions, subagent spawning, and plan/build agents"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
