@@ -1,0 +1,105 @@
+{
+  "title": "Rune TUI implementation (prompt_toolkit) — work log",
+  "generated_at": "2026-02-03",
+  "scope": {
+    "project": "rune",
+    "working_directory": "/Users/freddie-mac-mini/agents/rune",
+    "focus": [
+      "Interactive prompt rendering fixes",
+      "New persistent TUI mode",
+      "Slash-command UX and agent switching",
+      "Output pane follow-mode scrolling",
+      "User input line highlighting",
+      "Removal of debug/test artifacts and legacy non-TUI path"
+    ]
+  },
+  "high_level_summary": "We fixed prompt_toolkit rendering issues in the legacy input widget, then introduced a new persistent TUI (prompt_toolkit Application) as the primary interactive experience. The TUI provides a scrollable output pane, a pinned single-line prompt, follow-mode scrolling, slash commands (e.g. /exit, /reset, /history, /status, /agents, /switch <agent>), and highlighted echoed user input lines. We removed debug/style-test artifacts and removed the old non-TUI interactive prompt path from the CLI.",
+  "changes": [
+    {
+      "area": "Legacy input widget fixes",
+      "files": ["rune/input_widget.py"],
+      "details": [
+        "Adjusted prompt_toolkit layout: margins moved onto the correct Window.",
+        "Implemented a proper Margin subclass to render the '❯' glyph.",
+        "Corrected malformed formatted-text fragments.",
+        "Adjusted styling so rule/label/prompt render in light gray (#b0b0b0)."
+      ]
+    },
+    {
+      "area": "Persistent TUI mode",
+      "files": ["rune/tui.py", "rune/cli.py"],
+      "details": [
+        "Added a new TUI entrypoint (run_tui) and wired it behind --ui tui.",
+        "Made interactive mode route to the TUI.",
+        "Replaced the old run_interactive REPL with a thin wrapper that calls run_tui()."
+      ]
+    },
+    {
+      "area": "Python 3.13 + prompt_toolkit 3.0.52 stability",
+      "files": ["rune/tui.py"],
+      "details": [
+        "Avoided read-only buffer insertion errors by deferring buffer writes until the app is running.",
+        "Ran the app via asyncio.run(...) and app.run_async() in a task.",
+        "Fixed an API mismatch around cursor-at-end detection."
+      ]
+    },
+    {
+      "area": "TUI layout and UX",
+      "files": ["rune/tui.py"],
+      "details": [
+        "Refined layout into a scrollable output pane with a single-line prompt pinned below.",
+        "Full-width horizontal rules and reduced blank lines.",
+        "Implemented follow-mode scrolling with PageUp/PageDown/End key bindings.",
+        "Enforced that commands must be prefixed with '/'.",
+        "Implemented slash commands: /exit, /reset, /history, /status, /agents, /switch <agent>.",
+        "Dynamic prompt glyph updates after switching agents."
+      ]
+    },
+    {
+      "area": "Echoed user input highlighting",
+      "files": ["rune/tui.py"],
+      "details": [
+        "Implemented a prompt_toolkit-native lexer that styles any line starting with '> ' using a ('class:user_input', ...) fragment.",
+        "Fixed style mapping keys: use 'user_input' (not 'class:user_input') in the Style dict.",
+        "Result: echoed input lines render with a white background in the output pane."
+      ]
+    },
+    {
+      "area": "Cleanup: remove debug/test artifacts and legacy non-TUI path",
+      "files": ["rune/tui.py", "rune/cli.py"],
+      "details": [
+        "Removed debug diagnostics print and STYLE_TEST header fragment from the TUI.",
+        "Removed the old prompt_toolkit widget fallback path from the CLI.",
+        "Deleted _prompt_user_boxed and removed the rune.input_widget dependency from rune/cli.py."
+      ]
+    }
+  ],
+  "notable_design_decisions": [
+    {
+      "decision": "Make TUI the default interactive experience",
+      "rationale": "The persistent TUI provides a stable, modern UX (scrollback, pinned prompt, keybindings) and avoids prompt_toolkit widget edge cases in the old REPL."
+    },
+    {
+      "decision": "Use a prompt_toolkit-native lexer for highlighting",
+      "rationale": "Pygments-based approaches were brittle for line-prefix styling; a custom lexer reliably styles lines beginning with '> '."
+    },
+    {
+      "decision": "Defer buffer writes until app is running",
+      "rationale": "Avoids prompt_toolkit read-only buffer insertion errors observed on Python 3.13 + prompt_toolkit 3.0.52."
+    }
+  ],
+  "current_state": {
+    "interactive_experience": "TUI",
+    "echoed_input_highlighting": true,
+    "debug_noise_removed": true,
+    "legacy_non_tui_path_used_by_cli": false,
+    "notes": [
+      "There may still be unused legacy non-TUI code elsewhere in the repo, but it is no longer used by the CLI."
+    ]
+  },
+  "files_touched": [
+    "rune/input_widget.py",
+    "rune/tui.py",
+    "rune/cli.py"
+  ]
+}
