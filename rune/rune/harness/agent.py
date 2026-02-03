@@ -16,7 +16,7 @@ from rune.harness.mcp_client import MCPManager
 from rune.harness.permissions import PermissionLevel
 from rune.harness.session import Session
 from rune.harness.tools import TOOL_DEFINITIONS, ToolExecutor, ToolResult, TodoList
-from rune.harness.skills import SkillsHarness
+from rune.harness.skills import SkillsManager
 
 
 @dataclass
@@ -86,8 +86,8 @@ class Agent:
         else:
             self._mcp_tools = []
 
-        # Initialize skills harness (prompt augmentation + per-turn injections)
-        self.skills = SkillsHarness(working_dir=self.working_dir)
+        # Initialize skills manager (prompt augmentation + per-turn injections)
+        self.skills = SkillsManager(working_dir=self.working_dir)
 
         # Initialize session
         self.session = Session(

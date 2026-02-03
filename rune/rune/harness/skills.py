@@ -439,7 +439,3 @@ class SkillsManager:
         if injections:
             insert_at = 1 if session.messages and session.messages[0].role == "system" else 0
             session.messages[insert_at:insert_at] = injections
-
-
-# Compatibility alias for existing code
-SkillsHarness = SkillsManager
