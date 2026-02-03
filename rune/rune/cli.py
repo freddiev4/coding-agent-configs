@@ -40,103 +40,14 @@ def print_tool_result(result, name: str) -> None:
 
 
 def run_interactive(agent: Agent) -> None:
-    """Run the agent in interactive REPL mode."""
-    # Print header
-    console.print(Panel.fit(
-        f"[bold cyan]Rune[/bold cyan] - Interactive Mode\n"
-        f"[dim]Agent:[/dim] {agent.agent_def.name} | [dim]Model:[/dim] {agent.config.model}\n"
-        f"[dim]Directory:[/dim] {agent.working_dir}",
-        title="Welcome",
-        border_style="cyan"
-    ))
-    console.print("[dim]Commands: exit, reset, history, switch <agent>, agents, status[/dim]\n")
+    """Run interactive mode.
 
-    while True:
-        try:
-            prompt_char = {"build": "#", "plan": "?"}.get(agent.agent_def.name, ">")
-            user_input = console.input(f"[blue]{agent.agent_def.name} {prompt_char}[/blue] ").strip()
-        except (KeyboardInterrupt, EOFError):
-            console.print("\n[yellow]Goodbye![/yellow]")
-            agent.shutdown()
-            break
+    Interactive mode is implemented by the TUI (see rune/tui.py). This wrapper
+    remains for backward compatibility with any external imports.
+    """
+    from rune.tui import run_tui
 
-        if not user_input:
-            continue
-
-        if user_input.lower() in ("exit", "quit"):
-            console.print("[yellow]Goodbye![/yellow]")
-            agent.shutdown()
-            break
-
-        if user_input.lower() == "reset":
-            agent.reset()
-            console.print("[yellow]Session reset.[/yellow]")
-            continue
-
-        if user_input.lower() == "history":
-            table = Table(title="Conversation History", show_header=True, header_style="bold cyan")
-            table.add_column("Role", style="cyan")
-            table.add_column("Content")
-
-            for msg in agent.session.messages:
-                content = msg.content or ""
-                if len(content) > 200:
-                    content = content[:200] + "..."
-                table.add_row(msg.role, content)
-
-            console.print(table)
-            continue
-
-        if user_input.lower() == "status":
-            stats = agent.session
-            panel = Panel(
-                f"[cyan]Session:[/cyan] {stats.session_id}\n"
-                f"[cyan]Turns:[/cyan] {stats.turn_count}\n"
-                f"[cyan]Messages:[/cyan] {len(stats.messages)}\n"
-                f"[cyan]Tokens:[/cyan] {stats.usage.total_tokens} "
-                f"(prompt: {stats.usage.prompt_tokens}, completion: {stats.usage.completion_tokens})\n"
-                f"[cyan]Working Dir:[/cyan] {stats.working_dir}",
-                title="Agent Status",
-                border_style="blue"
-            )
-            console.print(panel)
-            continue
-
-        if user_input.lower() == "agents":
-            table = Table(title="Available Agents", show_header=True, header_style="bold cyan")
-            table.add_column("Name", style="cyan")
-            table.add_column("Description")
-            table.add_column("Current", justify="center")
-
-            for ag in list_agents():
-                marker = "✓" if ag.name == agent.agent_def.name else ""
-                table.add_row(ag.name, ag.description, marker)
-
-            console.print(table)
-            continue
-
-        if user_input.lower().startswith("switch "):
-            new_name = user_input.split(None, 1)[1].strip()
-            try:
-                agent.switch_agent(new_name)
-                console.print(f"[yellow]Switched to {new_name} agent.[/yellow]")
-            except ValueError as e:
-                console.print(f"[red]{e}[/red]")
-            continue
-
-        # Run the agent loop
-        try:
-            for turn in agent.stream(user_input):
-                for i, tool_call in enumerate(turn.tool_calls):
-                    args = json.loads(tool_call["function"]["arguments"])
-                    print_tool_call(tool_call["function"]["name"], args, turn.agent_name)
-                    if i < len(turn.tool_results):
-                        print_tool_result(turn.tool_results[i], tool_call["function"]["name"])
-
-                if turn.finished and turn.response:
-                    console.print(f"\n[green]{turn.response}[/green]")
-        except Exception as e:
-            console.print(f"[red]Error: {e}[/red]")
+    run_tui(agent)
 
 
 def run_single(agent: Agent, prompt: str) -> None:
@@ -178,6 +89,12 @@ Examples:
                         help="Path to MCP server config JSON file")
     parser.add_argument("--no-auto-approve", action="store_true",
                         help="Require confirmation for tool execution")
+    parser.add_argument(
+        "--ui",
+        default="tui",
+        choices=["tui"],
+        help="Interactive UI mode (default: tui)",
+    )
 
     args = parser.parse_args()
 
@@ -208,7 +125,9 @@ Examples:
     if args.prompt:
         run_single(agent, args.prompt)
     else:
-        run_interactive(agent)
+        from rune.tui import run_tui
+
+        run_tui(agent)
 
 
 if __name__ == "__main__":
