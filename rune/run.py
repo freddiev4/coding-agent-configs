@@ -19,5 +19,5 @@ print()
 
 # Still run the CLI if called directly
 if __name__ == "__main__":
-    from rune.cli import main
+    from rune.cli.main import main
     main()

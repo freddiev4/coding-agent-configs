@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "rune"}]
 
 [tool.poetry.scripts]
-rune = "rune.cli:main"
+rune = "rune.cli.main:main"
 
 [tool.poetry.dependencies]
 python = ">=3.10.13,<4.0"

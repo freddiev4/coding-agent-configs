@@ -6,9 +6,6 @@ import os
 import sys
 
 from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
-from rich import print as rprint
 
 from rune.harness.agent import Agent, AgentConfig
 from rune.agents import list_agents
@@ -45,7 +42,7 @@ def run_interactive(agent: Agent) -> None:
     Interactive mode is implemented by the TUI (see rune/tui.py). This wrapper
     remains for backward compatibility with any external imports.
     """
-    from rune.tui import run_tui
+    from rune.cli.tui import run_tui
 
     run_tui(agent)
 
@@ -125,7 +122,7 @@ Examples:
     if args.prompt:
         run_single(agent, args.prompt)
     else:
-        from rune.tui import run_tui
+        from rune.cli.tui import run_tui
 
         run_tui(agent)
 
